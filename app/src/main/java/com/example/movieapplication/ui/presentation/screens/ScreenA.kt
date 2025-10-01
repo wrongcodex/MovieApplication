@@ -172,6 +172,7 @@
 
 package com.example.movieapplication.ui.presentation.screens
 
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 
@@ -198,8 +199,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import com.example.movieapplication.core.api.NetworkResponse
+import com.example.movieapplication.core.models.testDiveApi.TestDiveApiModel
 import com.example.movieapplication.core.viewmodel.MovieViewModel
-import com.example.movieapplication.core.models.Result
 
 //import com.your.package.name.model.Result // <-- Import your Result data class
 
@@ -355,10 +357,9 @@ fun ScreenA(
     navController: NavHostController,
     movieViewModel: MovieViewModel // Obtain ViewModel instance
 ) {
-    // Collect states in a lifecycle-aware manner
-    val movies by movieViewModel.movies.collectAsStateWithLifecycle()
-    val isLoading by movieViewModel.isLoading.collectAsStateWithLifecycle()
-    val error by movieViewModel.error.collectAsStateWithLifecycle()
+
+    val result = movieViewModel.movieResult.collectAsState().value
+
     Surface(
             modifier = Modifier.fillMaxSize(),
     color = MaterialTheme.colorScheme.background
@@ -373,29 +374,22 @@ fun ScreenA(
                 }
             )
 
-            // Handle loading state
-            if (isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    CircularProgressIndicator()
+            when(result){
+                NetworkResponse.Loading ->{
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
-            } else if (error != null) {
-                // Handle error state
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Error: $error",
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodyLarge
-                    )
+                is NetworkResponse.Success<*> -> {
+                    val data = result.data as TestDiveApiModel
+                    MovieList(movies = data.similar.results)
                 }
-            } else {
-                // Display the list of movies
-                MovieList(movies = movies)
+                is NetworkResponse.Error -> {
+                    //
+                }
             }
         }
     }
@@ -442,7 +436,7 @@ fun SearchBar(
 }
 
 @Composable
-fun MovieList(movies: List<Result>) {
+fun MovieList(movies: List<com.example.movieapplication.core.models.testDiveApi.Result>) {
     if (movies.isEmpty()) {
         Box(
             modifier = Modifier.fillMaxSize(),
@@ -464,8 +458,8 @@ fun MovieList(movies: List<Result>) {
 
 
 @Composable
-fun MovieItem(movie: Result) {
-    val imageUrl = movie.yID?.let { "https://img.youtube.com/vi/${it}/0.jpg" } ?: "" // Handle nullable yID
+fun MovieItem(movie: com.example.movieapplication.core.models.testDiveApi.Result) {
+    val imageUrl = ""
 
     Card(
         modifier = Modifier
@@ -507,7 +501,7 @@ fun MovieItem(movie: Result) {
                 )
                 Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    text = movie.description ?: "No Description", // wTeaser from API, handle nullable
+                    text = "", // wTeaser from API, handle nullable
                     style = MaterialTheme.typography.bodySmall,
                     maxLines = 3,
                     overflow = TextOverflow.Ellipsis,

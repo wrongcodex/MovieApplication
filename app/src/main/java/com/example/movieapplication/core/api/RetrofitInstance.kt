@@ -5,7 +5,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
 object RetrofitInstance {
-    private val baseURL = "https://tastedive.com/"
+    private val baseURL = "https://tastedive.com/api/"
 
     private fun getInstance(): Retrofit{
         return Retrofit.Builder()
